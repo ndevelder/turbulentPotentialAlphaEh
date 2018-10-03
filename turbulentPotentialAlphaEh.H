@@ -79,11 +79,13 @@ class turbulentPotentialAlphaEh
             dimensionedScalar cEp1_;
             dimensionedScalar cEp2con_;
             dimensionedScalar cEp3_;
+			dimensionedScalar cEp4_;
             dimensionedScalar cD1_;
             dimensionedScalar cD2_;
             dimensionedScalar cD3_;
             dimensionedScalar cD4_;
             dimensionedScalar cP1_;
+			dimensionedScalar cP1beta_;
             dimensionedScalar cP2_;
             dimensionedScalar cP3_;
             dimensionedScalar cP4_;
