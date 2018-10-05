@@ -180,6 +180,15 @@ turbulentPotentialAlphaEh::turbulentPotentialAlphaEh
             0.9
         )
     ),
+    cP1chi_
+    (
+        dimensionedScalar::lookupOrAddToDict
+        (
+            "cP1chi",
+            coeffDict_,
+            0.67
+        )
+    ),
     cP2_
     (
         dimensionedScalar::lookupOrAddToDict
@@ -259,6 +268,24 @@ turbulentPotentialAlphaEh::turbulentPotentialAlphaEh
             "cA",
             coeffDict_,
             1.0
+        )
+    ),
+    cG_
+    (
+        dimensionedScalar::lookupOrAddToDict
+        (
+            "cG",
+            coeffDict_,
+            0.07
+        )
+    ),
+    cGw_
+    (
+        dimensionedScalar::lookupOrAddToDict
+        (
+            "cGw",
+            coeffDict_,
+            0.67
         )
     ),
     cEhmM_
@@ -858,6 +885,7 @@ bool turbulentPotentialAlphaEh::read()
 		cEp4_.readIfPresent(coeffDict());
         cP1_.readIfPresent(coeffDict());
 		cP1beta_.readIfPresent(coeffDict());
+		cP1chi_.readIfPresent(coeffDict());
         cP2_.readIfPresent(coeffDict());
         cP3_.readIfPresent(coeffDict());
 		cP4_.readIfPresent(coeffDict());
@@ -873,6 +901,8 @@ bool turbulentPotentialAlphaEh::read()
 		cD4_.readIfPresent(coeffDict());
 		cT_.readIfPresent(coeffDict());
 		cA_.readIfPresent(coeffDict());
+		cG_.readIfPresent(coeffDict());
+		cGw_.readIfPresent(coeffDict());
 		cNL_.readIfPresent(coeffDict());
 		cNF_.readIfPresent(coeffDict());
 		sigmaK_.readIfPresent(coeffDict());
@@ -1023,8 +1053,8 @@ void turbulentPotentialAlphaEh::correct()
     
 	alpha_ = 1.0/(1.0 + 1.5*tpphi_);
 
-	gamma_ = 1.0/(1.0 + 0.07*(1.0 - 0.67*alpha_)*(nut_/nu()));
-
+	gamma_ = 1.0/(1.0 + cG_*(1.0 - cGw_*alpha_)*(nut_/nu()));
+	gamma_ = 1.0/(1.0 + cG_*(1.0 - cGw_*alpha_)*pow(nut_/nu(),0.667));
 	
     //*************************************//
     //Dissipation equation
@@ -1085,6 +1115,10 @@ void turbulentPotentialAlphaEh::correct()
 		
 		if(cEp1Type_.value() == 11.0){
 			cEp1eqn = cEp1_*(0.985 + 0.008*(k_/(tpphi_*k_ + 0.02*k_)));
+		}
+		
+		if(cEp1Type_.value() == 12.0){
+			cEp1eqn = cEp1_ + cEp4_*alpha_*gamma_;
 		}
 	}
 	
@@ -1177,7 +1211,7 @@ void turbulentPotentialAlphaEh::correct()
 	//*************************************//
     // Phi/K equation 
     //*************************************//
-	cP1eqn_ = (cP1_ + cP1beta_*pOD)*(1.0-0.6*alpha_);
+	cP1eqn_ = (cP1_ + cP1beta_*pOD)*(1.0-cP1chi_*alpha_);
 
     tmp<fvScalarMatrix> tpphiEqn
     ( 
