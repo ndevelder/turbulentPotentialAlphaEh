@@ -1,3 +1,4 @@
+
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM Extend Project: Open Source CFD        |
@@ -14,80 +15,80 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-RASModel            turbulentPotential;
+RASModel            turbulentPotentialAlphaEh;
 
 turbulence          on;
 
 printCoeffs         on;
 
-turbulentPotentialCoeffs{
+turbulentPotentialAlphaEhCoeffs{
 
-   solveK              true;
-   solveEps            true;
-   solvePsi            true;
-   solvePhi            true;
-   solveNut            true;
-   timeScaleEps        epsilon;
-   prodType            2.0;
-   pMix  			   0.5;
-   cPrK                0.2;
-   cPrP				   1.0;
-   eqnSigmaK           false;
-   eqnSigmaEps         false;
-   eqnSigmaPhi         false;
-   eqnSigmaPsi         false;
-   eqncEp1             true;
-   eqncEp2             false;
-   eqncMu 	           false;
-   eqnEpsHat           mod;
-   nutType             phi;
-   sigmaKInit          1.0; 
-   sigmaEpsInit        0.83;
-   sigmaEpsVisc        1.0;
-   sigmaPhiInit        0.42;
-   sigmaPsiInit        1.0;
-   psiNuFrac           1.0;
-   phiNuFrac           1.0;
-   phiV1               0.0;
-   cT                  0.0;
-   cD1                 1.0;
-   cD2                 1.0;
-   cD3				   0.15;
-   cD4				   1.0;
-   cPphi               1.8;
-   cP1                 1.83; 
-   cP2                 0.6;
-   cP3                 0.12;
-   cP4                 0.85714;
-   cEp1                1.44;
-   cEp2con			   1.83;
-   cMu                 0.21;
-   cPr                 1.0;
-   cEhr                0.0019;
-   cVv1                0.0;
-   cTv1                0.0;
-   debugWrite          false;
-   tslimiter           false;
-   lslimiter           false;
-   phiType             none;
-   psiProd             psi;
-   gT1                 0.0;
-   gT2                 0.0;
-   gT3                 0.0;
-   cEhmP               0.79;
-   cEhmM			   10.0;
-   cEhmPK			   0.09;
-   cNF                 3.0;
-   cPw                 18;
-   nutRatMax 		   1e5;
+	solveK              true;
+	solveEps            true;
+	solvePsi            true;
+	solvePhi            true;
+	solveNut            true;
+
+	sigmaK              1.0; 
+	sigmaEps            0.83; 
+	sigmaPhi            0.53;
+	sigmaPsi            1.0; 
+	
+	prodType			1.0;
+	cPrK				0.4;
+	cPrP				1.0; 
+	pMix				0.5;
+        gType                           4.0;
+        cG				1.0;
+	cGw				1.0;
+
+	eqncEp1             true;
+	eqncEp2             false;
+        cEp1Type			12.0;
+	cEp1				1.44;                           
+        cEp2con				1.83;
+        cEp4				0.03;
+	eqnEpsHat           mod;
+	cEhmM				10.0;	
+	
+	transType           6.0;
+	cT                  0.03;
+	cA                  0.0;  
+	
+	dampType			15.0;
+	cNF					12.0;
+	nutRatMax			1e5;
+	eqncMu				false;
+	cMu					0.21;
+	betaK				0.09;
+        nutReal				false;
+	
+	cL1					0.36;
+	cL2					85; 
+	tslimiter			false;
+	lslimiter			false;
+
+	cD1					0.0; 
+	cD2					0.0;
+	cD3					1.0;
+	cD4					3.2;
+
+	cP1					3.3; 
+        cP1beta                                 0.4;
+	cP1chi					0.7;
+        cP2					0.3;
+	cP3					0.49;
+	cP4					0.85714;
+
+	debugWrite          false;
 }
 
 
 boundaryCoeffs{
-   tslimiter    false;
-   nutRatMax     1e5;
-   cMu		0.21;
-   betaK	0.09;
+	tslimiter			false;
+	nutRatMax			1e5;
+	cMu					0.21;
+	betaK				0.09;
 }
 
 // ************************************************************************* //
