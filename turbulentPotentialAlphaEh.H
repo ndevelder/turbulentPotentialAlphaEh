@@ -98,6 +98,7 @@ class turbulentPotentialAlphaEh
 			dimensionedScalar cA_;
 			dimensionedScalar cG_;
 			dimensionedScalar cGw_;
+			dimensionedScalar cGp_;
             dimensionedScalar cEhmM_;
 			dimensionedScalar cNF_;
 			dimensionedScalar pMix_;

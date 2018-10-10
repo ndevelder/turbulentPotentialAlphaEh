@@ -288,6 +288,15 @@ turbulentPotentialAlphaEh::turbulentPotentialAlphaEh
             0.67
         )
     ),
+    cGp_
+    (
+        dimensionedScalar::lookupOrAddToDict
+        (
+            "cGp",
+            coeffDict_,
+            1.0
+        )
+    ),
     cEhmM_
     (
         dimensionedScalar::lookupOrAddToDict
@@ -929,11 +938,11 @@ void turbulentPotentialAlphaEh::correct()
     // Bounding values not already defined by model
     //**********************************************//
 	
-    const dimensionedScalar eH0("minEpsHat", epsHat_.dimensions(), ROOTVSMALL);
-	const dimensionedScalar nut0("minNut", nut_.dimensions(), ROOTVSMALL);
+    const dimensionedScalar eH0("minEpsHat", epsHat_.dimensions(), SMALL);
+	const dimensionedScalar nut0("minNut", nut_.dimensions(), SMALL);
 	const dimensionedScalar nutSmall("smallNut", nut_.dimensions(), SMALL);
-	const dimensionedScalar tph0("minTpphi", tpphi_.dimensions(), ROOTVSMALL);
-	const dimensionedScalar L0("lMin", dimensionSet(0,1,0,0,0,0,0), ROOTVSMALL);
+	const dimensionedScalar tph0("minTpphi", tpphi_.dimensions(), SMALL);
+	const dimensionedScalar L0("lMin", dimensionSet(0,1,0,0,0,0,0), SMALL);
 
     if (mesh_.changing())
     {
@@ -1053,8 +1062,27 @@ void turbulentPotentialAlphaEh::correct()
     
 	alpha_ = 1.0/(1.0 + 1.5*tpphi_);
 
-	gamma_ = 1.0/(1.0 + cG_*(1.0 - cGw_*alpha_)*(nut_/nu()));
-	gamma_ = 1.0/(1.0 + cG_*(1.0 - cGw_*alpha_)*pow(nut_/nu(),0.667));
+	//gamma_ = 1.0/(1.0 + cG_*(1.0 - cGw_*alpha_)*(nut_/nu()));
+	volScalarField gammaNut("gammaNut", betaK_*k_*k_/epsilon_);
+	volScalarField gammaWall("gammaWall", 3.0*nu()*(gradTpphiSqrt & gradTpphiSqrt)*k_/epsilon_);
+	
+	if(gType_.value() == 1.0){
+		gammaNut = nut_;
+	}
+	
+	if(gType_.value() == 2.0){
+		gammaNut = betaK_*k_*k_/epsilon_;
+	}
+	
+	if(gType_.value() == 3.0){
+		gammaNut = nutPsi;
+	}
+	
+	if(gType_.value() == 4.0){
+		gammaNut = 0.5*tpphi_*tpphi_*k_*k_/epsilon_;
+	}
+	
+	gamma_ = 1.0/(1.0 + cG_*(1.0 - cGw_*alpha_)*pow(gammaNut/nu(),cGp_) + gammaWall);
 	
     //*************************************//
     //Dissipation equation
@@ -1211,8 +1239,9 @@ void turbulentPotentialAlphaEh::correct()
 	//*************************************//
     // Phi/K equation 
     //*************************************//
-	cP1eqn_ = (cP1_ + cP1beta_*pOD)*(1.0-cP1chi_*alpha_);
-
+	//cP1eqn_ = (cP1_ + cP1beta_*pOD)*(1.0-cP1chi_*alpha_)/pow(1.0 - gamma_,0.5);
+    cP1eqn_ = cP1_*(1.0 + cP1beta_*(1.0-alpha_))*(1.0 - gamma_)*(1.0 + cP1chi_*mag(tppsi_));
+	
     tmp<fvScalarMatrix> tpphiEqn
     ( 
         fvm::ddt(tpphi_)
@@ -1221,14 +1250,16 @@ void turbulentPotentialAlphaEh::correct()
       - fvm::laplacian(DphiEff(), tpphi_) 
       == 
 	  // Pressure Strain Slow + Fast
-	    (cP1eqn_ - 1.0)*(1.0-gamma_)*((2.0/3.0)-tpphi_)/T
+	    cP1eqn_*(2.0/3.0)/T
+	  - fvm::Sp(cP1eqn_/T, tpphi_)
 	  + cP2_*tpProd_*tpphi_
 
 	  // From K eqn
       - fvm::Sp(GdK,tpphi_)
 	  
 	  // Dissipation
-	  //- (1.0-gamma_)*((2.0/3.0)-tpphi_)/T
+	  - fvm::Sp((1.0-gamma_)*(2.0/3.0)/(T*(tpphi_ + tph0)),tpphi_)
+	  + (1.0-gamma_)*tpphi_/T
 	  
 	  // Transition
       + transPhi
@@ -1247,7 +1278,7 @@ void turbulentPotentialAlphaEh::correct()
     //*************************************//   
     // Psi Specific Constants
     //*************************************//
-	volVectorField psiDisWall("psiDisWall", cD1_*gamma_*(2.0*alpha_-1.0)*tpphi_*vorticity_);	
+	volVectorField psiDisWall("psiDisWall", cD1_*gamma_*(1.0-alpha_)*vorticity_);	
 	//volVectorField psiDisWall("psiDisWall", cD1_*gamma_*tpphi_*vorticity_);
 	
     //*************************************//   
@@ -1267,12 +1298,12 @@ void turbulentPotentialAlphaEh::correct()
 	    tpphi_*vorticity_
 		
 	  // Slow Pressure Strain
-      - fvm::Sp(cP1eqn_*(1.0-gamma_)/T,tppsi_)
+      - fvm::Sp(cP1eqn_/T,tppsi_)
 
 	  // Fast Pressure Strain
 	  - cP2_*tpphi_*vorticity_
 	  + cP2_*tpProd_*tppsi_
-	  - cP3_*(1.0-alpha_)*vorticity_
+	  - 0.5*(cP4_*(tppsi_ & tppsi_) + cP3_*(1.0-alpha_))*vorticity_
 	  
 	  // From K Equation
       - fvm::Sp(tpProd_,tppsi_)
