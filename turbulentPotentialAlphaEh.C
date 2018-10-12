@@ -1240,7 +1240,8 @@ void turbulentPotentialAlphaEh::correct()
     // Phi/K equation 
     //*************************************//
 	//cP1eqn_ = (cP1_ + cP1beta_*pOD)*(1.0-cP1chi_*alpha_)/pow(1.0 - gamma_,0.5);
-    cP1eqn_ = cP1_*(1.0 + cP1beta_*(1.0-alpha_))*(1.0 - gamma_)*(1.0 + cP1chi_*mag(tppsi_));
+    cP1eqn_ = cP1_*(1.0 - gamma_)*(1.0 + cP1chi_*mag(tppsi_) + cP1beta_*sqr(tpphi_));
+	//cP1eqn_ = cP1_*(1.0 - gamma_)*(1.0 + pow((tpphi_*tpphi_ + (tppsi_ & tppsi_)) + SMALL,0.5));
 	
     tmp<fvScalarMatrix> tpphiEqn
     ( 
@@ -1281,6 +1282,12 @@ void turbulentPotentialAlphaEh::correct()
 	volVectorField psiDisWall("psiDisWall", cD1_*gamma_*(1.0-alpha_)*vorticity_);	
 	//volVectorField psiDisWall("psiDisWall", cD1_*gamma_*tpphi_*vorticity_);
 	
+	//volScalarField cS("cS", 0.5*(cP4_*(tppsi_ & tppsi_) + cP3_*(1.0-alpha_)));
+	volScalarField cS("cS", cP3_*(1.0-alpha_)*(1.0 - pow((tpphi_*tpphi_ + (tppsi_ & tppsi_)) + SMALL,0.5))*(1.0-cP4_*sqrt(nut_/nu() + SMALL)));
+	
+	//volScalarField cS("cS", cP3_*(1.0-alpha_) + cP4_*(tppsi_ & tppsi_));
+	
+	
     //*************************************//   
     // Psi Equation
     //*************************************//
@@ -1303,7 +1310,7 @@ void turbulentPotentialAlphaEh::correct()
 	  // Fast Pressure Strain
 	  - cP2_*tpphi_*vorticity_
 	  + cP2_*tpProd_*tppsi_
-	  - 0.5*(cP4_*(tppsi_ & tppsi_) + cP3_*(1.0-alpha_))*vorticity_
+	  - cS*vorticity_
 	  
 	  // From K Equation
       - fvm::Sp(tpProd_,tppsi_)
